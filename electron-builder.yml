@@ -1,0 +1,28 @@
+appId: ru.sochno.crm
+productName: СОЧНО CRM
+# better-sqlite3 уже подготовлен под ABI Electron prebuilt-бинарником (scripts/setup-native.mjs),
+# поэтому пересборку из исходников при упаковке отключаем — компилятор не нужен.
+npmRebuild: false
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - dist-electron/**
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: СОЧНО CRM
+publish:
+  provider: github
+  owner: webdevstudio23-ai
+  repo: sochno-crm
