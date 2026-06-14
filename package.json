@@ -1,6 +1,6 @@
 {
   "name": "sochno-crm",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "СОЧНО CRM — десктопная CRM для веб-студии (Electron + SQLite)",
   "private": true,
   "main": "dist-electron/main.js",

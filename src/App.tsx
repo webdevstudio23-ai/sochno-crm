@@ -276,7 +276,7 @@ function LeadModal({ lead, onClose, onSave }) {
   const [form, setForm] = useState(lead);
   const [draft, setDraft] = useState("");
   useEffect(() => { setForm(lead); setDraft(""); }, [lead]);
-  if (!lead) return null;
+  if (!lead || !form) return null;
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const notes = form.notes || [];
   const addNote = () => {
@@ -463,7 +463,7 @@ function Finance({ tx, upTx, leads }) {
 function TxModal({ t, onClose, onSave, leads }) {
   const [form, setForm] = useState(t);
   useEffect(() => setForm(t), [t]);
-  if (!t) return null;
+  if (!t || !form) return null;
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   return (
     <Modal open={!!t} onClose={onClose} title="Операция">
