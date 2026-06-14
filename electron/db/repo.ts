@@ -1,4 +1,5 @@
 import { getDb } from "./index";
+import * as XLSX from "xlsx";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -235,4 +236,76 @@ export function saveDoc(d: any) {
 }
 export function removeDoc(id: string) {
   getDb().prepare("DELETE FROM vault_docs WHERE id = ?").run(id);
+}
+
+/* ------------------------------- ТАБЛИЦЫ (Excel/CSV) ------------------------------- */
+
+const MAX_ROWS = 2000; // ограничение, чтобы огромные файлы не вешали интерфейс
+const MAX_COLS = 100;
+
+/** Список импортированных таблиц (без самих байтов файла). */
+export function listSpreadsheets() {
+  return getDb()
+    .prepare("SELECT id, name, size, imported_at FROM spreadsheets ORDER BY rowid DESC")
+    .all()
+    .map((s: any) => ({ id: s.id, name: s.name, size: s.size, importedAt: s.imported_at }));
+}
+
+/** Сохранить импортированный файл (исходные байты) в базу. */
+export function addSpreadsheet(name: string, data: Buffer) {
+  const id = uid();
+  getDb()
+    .prepare(
+      "INSERT INTO spreadsheets (id, name, size, imported_at, data) VALUES (@id,@name,@size,@imported_at,@data)"
+    )
+    .run({ id, name, size: data.length, imported_at: new Date().toISOString(), data });
+  return { id, name, size: data.length, importedAt: new Date().toISOString() };
+}
+
+/**
+ * Открыть таблицу: распарсить сохранённые байты через SheetJS и вернуть
+ * структуру { name, sheets: [{ name, rows, cols, data, truncated }] } для просмотра.
+ */
+export function openSpreadsheet(id: string) {
+  const row = getDb().prepare("SELECT name, data FROM spreadsheets WHERE id = ?").get(id) as
+    | { name: string; data: Buffer }
+    | undefined;
+  if (!row) return null;
+
+  const wb = XLSX.read(row.data, { type: "buffer", cellDates: true });
+  const sheets = wb.SheetNames.map((sheetName) => {
+    const ws = wb.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json<any[]>(ws, {
+      header: 1,
+      raw: false,
+      defval: "",
+      blankrows: true,
+    });
+
+    let truncated = false;
+    let rows = aoa as any[][];
+    if (rows.length > MAX_ROWS) {
+      rows = rows.slice(0, MAX_ROWS);
+      truncated = true;
+    }
+    // выровнять ширину строк по самой длинной (но не больше MAX_COLS)
+    let cols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+    if (cols > MAX_COLS) {
+      cols = MAX_COLS;
+      truncated = true;
+    }
+    const data = rows.map((r) => {
+      const out: string[] = [];
+      for (let i = 0; i < cols; i++) out.push(r[i] == null ? "" : String(r[i]));
+      return out;
+    });
+
+    return { name: sheetName, rows: data.length, cols, data, truncated };
+  });
+
+  return { name: row.name, sheets };
+}
+
+export function removeSpreadsheet(id: string) {
+  getDb().prepare("DELETE FROM spreadsheets WHERE id = ?").run(id);
 }

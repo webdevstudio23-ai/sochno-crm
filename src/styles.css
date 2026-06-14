@@ -228,6 +228,23 @@ body{background:var(--cream)}
 .sc-backup{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:8px}
 .sc-backup .sc-link{padding:0}
 
+/* раздел «Таблицы» */
+.sc-card.sheet-item{display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s;padding:16px 18px}
+.sc-card.sheet-item:hover{border-color:var(--ink);transform:translateY(-1px)}
+.sc-sheet-ic{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;color:#2F8F4E}
+.sc-sheet-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sc-sheet-meta strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-sheet-bar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.sc-sheet-wrap{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:calc(100vh - 220px)}
+.sc-sheet{border-collapse:separate;border-spacing:0;font-size:13px;font-variant-numeric:tabular-nums}
+.sc-sheet th,.sc-sheet td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}
+.sc-sheet thead th{position:sticky;top:0;z-index:2;background:var(--soft);color:var(--muted);font-weight:700;text-align:center}
+.sc-sheet-colh{min-width:80px}
+.sc-sheet-corner{position:sticky;left:0;top:0;z-index:3;background:var(--soft);min-width:44px}
+.sc-sheet-rowh{position:sticky;left:0;z-index:1;background:var(--soft);color:var(--muted);font-weight:700;text-align:center;min-width:44px}
+.sc-sheet tbody tr:hover td{background:var(--cream)}
+.sc-sheet tbody tr:hover .sc-sheet-rowh{background:#ece5d6}
+
 /* экран перехвата ошибок (вместо «пустого бежевого экрана») */
 .sc-errbound{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--cream);padding:24px}
 .sc-errbound-card{background:var(--paper);border:1px solid var(--line);border-radius:22px;max-width:520px;padding:34px 36px;box-shadow:0 20px 60px rgba(0,0,0,.12)}

@@ -50,6 +50,15 @@ CREATE TABLE IF NOT EXISTS meta (
   key TEXT PRIMARY KEY, value TEXT
 );
 
+-- импортированные Excel/CSV-таблицы (хранятся как исходные байты файла)
+CREATE TABLE IF NOT EXISTS spreadsheets (
+  id          TEXT PRIMARY KEY,
+  name        TEXT NOT NULL DEFAULT '',
+  size        INTEGER DEFAULT 0,
+  imported_at TEXT NOT NULL,
+  data        BLOB NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_leads_status  ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_source  ON leads(source);
 CREATE INDEX IF NOT EXISTS idx_tx_date       ON transactions(date);

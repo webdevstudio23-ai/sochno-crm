@@ -38,5 +38,14 @@ interface Window {
       export(): Promise<string>;
       reveal(): Promise<void>;
     };
+    sheets: {
+      list(): Promise<{ id: string; name: string; size: number; importedAt: string }[]>;
+      import(): Promise<{ id: string; name: string; size: number; importedAt: string } | null>;
+      open(id: string): Promise<{
+        name: string;
+        sheets: { name: string; rows: number; cols: number; data: string[][]; truncated: boolean }[];
+      } | null>;
+      remove(id: string): Promise<void>;
+    };
   };
 }

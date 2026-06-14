@@ -30,4 +30,10 @@ contextBridge.exposeInMainWorld("crm", {
     export: () => ipcRenderer.invoke("backup:export"),
     reveal: () => ipcRenderer.invoke("backup:reveal"),
   },
+  sheets: {
+    list: () => ipcRenderer.invoke("sheets:list"),
+    import: () => ipcRenderer.invoke("sheets:import"),
+    open: (id: string) => ipcRenderer.invoke("sheets:open", id),
+    remove: (id: string) => ipcRenderer.invoke("sheets:remove", id),
+  },
 });

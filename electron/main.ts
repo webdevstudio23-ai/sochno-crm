@@ -51,6 +51,24 @@ function revealDb(): void {
   shell.showItemInFolder(dbFilePath());
 }
 
+/* ----------------------------- импорт таблиц ----------------------------- */
+
+async function importSpreadsheet() {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: "Выберите таблицу для импорта",
+    properties: ["openFile"],
+    filters: [
+      { name: "Таблицы", extensions: ["xlsx", "xls", "xlsm", "csv"] },
+      { name: "Все файлы", extensions: ["*"] },
+    ],
+  });
+  if (canceled || !filePaths.length) return null;
+  const filePath = filePaths[0];
+  const data = fs.readFileSync(filePath);
+  const name = path.basename(filePath);
+  return repo.addSpreadsheet(name, data);
+}
+
 /* ----------------------------- регистрация IPC ----------------------------- */
 
 function registerIpc() {
@@ -82,6 +100,12 @@ function registerIpc() {
   // бэкап
   ipcMain.handle("backup:export", () => exportDb());
   ipcMain.handle("backup:reveal", () => revealDb());
+
+  // таблицы (Excel/CSV)
+  ipcMain.handle("sheets:list", () => repo.listSpreadsheets());
+  ipcMain.handle("sheets:import", () => importSpreadsheet());
+  ipcMain.handle("sheets:open", (_e, id) => repo.openSpreadsheet(id));
+  ipcMain.handle("sheets:remove", (_e, id) => repo.removeSpreadsheet(id));
 }
 
 /* ----------------------------- меню приложения ----------------------------- */

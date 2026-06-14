@@ -3,7 +3,7 @@ import {
   LayoutGrid, Users, Columns, Wallet, Shield, Plus, Search, X, Pencil,
   Trash2, Check, Eye, EyeOff, Phone, Globe, MessageSquare, FileText,
   StickyNote, CheckSquare, ArrowUpRight, ArrowDownRight, Link2, Calendar,
-  Copy, ClipboardList
+  Copy, ClipboardList, Table2, FileSpreadsheet, Upload, ArrowLeft
 } from "lucide-react";
 import { api } from "./api";
 
@@ -85,6 +85,7 @@ export default function App() {
     { id: "funnels", label: "Воронки", icon: Columns },
     { id: "finance", label: "Финансы", icon: Wallet },
     { id: "vault", label: "Сейф", icon: Shield },
+    { id: "sheets", label: "Таблицы", icon: Table2 },
   ];
 
   return (
@@ -127,6 +128,7 @@ export default function App() {
             {view === "funnels" && <Funnels leads={leads} upLeads={upLeads} />}
             {view === "finance" && <Finance tx={tx} upTx={upTx} leads={leads} />}
             {view === "vault" && <VaultView vault={vault} upVault={upVault} />}
+            {view === "sheets" && <Spreadsheets />}
           </div>
           </>
         )}
@@ -614,6 +616,126 @@ function Docs({ vault, upVault }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ================================ ТАБЛИЦЫ (Excel/CSV) ================================ */
+function colName(i) {
+  let s = "";
+  i = i + 1;
+  while (i > 0) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
+  return s;
+}
+function fmtSize(b) {
+  if (!b) return "—";
+  if (b < 1024) return b + " Б";
+  if (b < 1024 * 1024) return (b / 1024).toFixed(0) + " КБ";
+  return (b / 1024 / 1024).toFixed(1) + " МБ";
+}
+function Spreadsheets() {
+  const [list, setList] = useState([]);
+  const [openId, setOpenId] = useState(null);
+  const [doc, setDoc] = useState(null);
+  const [active, setActive] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => setList(await api.sheets.list());
+  useEffect(() => { refresh(); }, []);
+
+  const importFile = async () => {
+    setBusy(true);
+    try {
+      const res = await api.sheets.import();
+      if (res) await refresh();
+    } finally { setBusy(false); }
+  };
+
+  const open = async (id) => {
+    setBusy(true);
+    try {
+      const d = await api.sheets.open(id);
+      setDoc(d); setActive(0); setOpenId(id);
+    } finally { setBusy(false); }
+  };
+
+  const remove = async (id) => {
+    await api.sheets.remove(id);
+    if (openId === id) { setOpenId(null); setDoc(null); }
+    await refresh();
+  };
+
+  const back = () => { setOpenId(null); setDoc(null); };
+
+  // ---- режим просмотра конкретной таблицы ----
+  if (openId && doc) {
+    const sheet = doc.sheets[active] || { data: [], cols: 0, rows: 0 };
+    return (
+      <div className="sc-view">
+        <div className="sc-sheet-bar">
+          <button className="sc-btn ghost small" onClick={back}><ArrowLeft size={15} /> К списку</button>
+          <h1 className="sc-vtitle" style={{ fontSize: 22 }}>{doc.name}</h1>
+        </div>
+
+        {doc.sheets.length > 1 && (
+          <div className="sc-chips small" style={{ marginBottom: 12 }}>
+            {doc.sheets.map((s, i) => (
+              <button key={i} className={"sc-chip" + (active === i ? " on" : "")} onClick={() => setActive(i)}>{s.name}</button>
+            ))}
+          </div>
+        )}
+
+        {sheet.data.length === 0 ? (
+          <div className="sc-empty">Лист пустой.</div>
+        ) : (
+          <div className="sc-sheet-wrap">
+            <table className="sc-sheet">
+              <thead>
+                <tr>
+                  <th className="sc-sheet-corner"></th>
+                  {Array.from({ length: sheet.cols }).map((_, c) => <th key={c} className="sc-sheet-colh">{colName(c)}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {sheet.data.map((row, r) => (
+                  <tr key={r}>
+                    <td className="sc-sheet-rowh">{r + 1}</td>
+                    {Array.from({ length: sheet.cols }).map((_, c) => <td key={c}>{row[c] || ""}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {sheet.truncated && <div className="sc-muted-s" style={{ marginTop: 10 }}>Показана часть таблицы (очень большой файл).</div>}
+      </div>
+    );
+  }
+
+  // ---- список импортированных таблиц ----
+  return (
+    <div className="sc-view">
+      <div className="sc-vhead">
+        <div><h1 className="sc-vtitle">Таблицы<i className="sc-red-dot small" /></h1><p className="sc-muted">Excel и CSV-файлы хранятся внутри CRM</p></div>
+        <button className="sc-btn" onClick={importFile} disabled={busy}><Upload size={16} /> {busy ? "Загрузка…" : "Импорт таблицы"}</button>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="sc-card"><div className="sc-empty">Пока нет таблиц. Нажмите «Импорт таблицы» и выберите файл .xlsx или .csv — он сохранится здесь.</div></div>
+      ) : (
+        <div className="sc-cards-grid">
+          {list.map((s) => (
+            <div key={s.id} className="sc-card sheet-item" onClick={() => open(s.id)}>
+              <div className="sc-sheet-ic"><FileSpreadsheet size={22} /></div>
+              <div className="sc-sheet-meta">
+                <strong>{s.name}</strong>
+                <span className="sc-muted-s">{fmtSize(s.size)} · {new Date(s.importedAt).toLocaleDateString("ru-RU")}</span>
+              </div>
+              <button className="sc-icon-btn danger" onClick={(e) => { e.stopPropagation(); remove(s.id); }}><Trash2 size={16} /></button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -55,4 +55,11 @@ export const api = {
     export: () => crm.backup.export(),
     reveal: () => crm.backup.reveal(),
   },
+
+  sheets: {
+    list: () => crm.sheets.list(),
+    import: () => crm.sheets.import(),
+    open: (id: Id) => crm.sheets.open(id),
+    remove: (id: Id) => crm.sheets.remove(id),
+  },
 };
