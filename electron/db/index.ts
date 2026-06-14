@@ -23,11 +23,23 @@ export function getDb(): Database.Database {
   return db;
 }
 
-/** Если лидов нет — залить демо-данные (как в прототипе), чтобы UI не был пустым. */
+/**
+ * При первом запуске (никогда раньше не сеяли) заливает демо-данные, чтобы UI
+ * не был пустым. После — ставит флаг в meta, чтобы повторно НЕ заливать демо-
+ * данные, даже если пользователь позже удалит все свои записи.
+ */
 export function seedIfEmpty(): void {
   const d = getDb();
+  const already = d.prepare("SELECT value FROM meta WHERE key = 'seeded'").get() as
+    | { value: string }
+    | undefined;
+  if (already) return;
+
   const { c } = d.prepare("SELECT COUNT(*) AS c FROM leads").get() as { c: number };
-  if (c > 0) return;
+  if (c > 0) {
+    d.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('seeded', '1')").run();
+    return;
+  }
 
   const now = () => new Date().toISOString();
 
@@ -74,6 +86,8 @@ export function seedIfEmpty(): void {
 
     d.prepare(`INSERT INTO vault_docs (id,title,link,note) VALUES (?,?,?,?)`)
       .run(uid(), "Бриф Modteh.pdf", "", "Заполненный бриф клиента");
+
+    d.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('seeded', '1')").run();
   });
 
   seed();

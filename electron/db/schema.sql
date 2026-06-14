@@ -46,6 +46,10 @@ CREATE TABLE IF NOT EXISTS vault_docs (
   id TEXT PRIMARY KEY, title TEXT DEFAULT '', link TEXT DEFAULT '', note TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY, value TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_leads_status  ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_source  ON leads(source);
 CREATE INDEX IF NOT EXISTS idx_tx_date       ON transactions(date);
